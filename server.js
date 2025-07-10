@@ -13,12 +13,12 @@ app.use(express.json());
 const products = [
   {
     id: 1,
-    name: "Apple Wireless Bluetooth Headphone",
+    name: "Apple Earbuds",
     category: "Electronics",
-    price: 90.99,
+    price: 100,
     description: "High-quality wireless headphones with noise cancellation",
     stock: 30,
-    image: "https://example.com/headphones.jpg",
+    image: "https://example.com/headphones.jpg", 
   },
   {
     id: 2,
