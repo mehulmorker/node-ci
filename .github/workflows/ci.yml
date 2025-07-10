@@ -65,19 +65,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ap-south-1
         run: |
-          # Create version label manually to avoid Git dependency
-          VERSION_LABEL="app-$(date +%y%m%d_%H%M%S)"
-
           # Initialize EB application
           eb init my-node-app --platform node.js --region $AWS_REGION
 
-          # Create application version
-          eb appversion --create "$VERSION_LABEL" --staged
-
           if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
             echo "Deploying to production (My-node-app-env)..."
-            eb deploy My-node-app-env --version "$VERSION_LABEL"
+            eb deploy My-node-app-env --staged
           else
             echo "Deploying to staging (my-node-app-staging)..."
-            eb deploy my-node-app-staging --version "$VERSION_LABEL"
+            eb deploy my-node-app-staging --staged
           fi
