@@ -1,0 +1,5 @@
+global:
+  application_name: my-node-app
+  default_region: ap-south-1
+  environment_name: My-node-app-env
+  platform: Node.js
