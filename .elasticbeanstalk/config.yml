@@ -6,5 +6,5 @@ global:
 branch-defaults:
   main:
     environment: My-node-app-env
-  my-feature-branch:  # optional, for dev previews
+  my-feature-branch: # optional, for dev previews
     environment: my-node-app-staging

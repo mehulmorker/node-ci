@@ -2,9 +2,9 @@ name: Node.js CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   ci:
@@ -15,30 +15,30 @@ jobs:
         node-version: [20.x]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Cache node_modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-    - name: Install dependencies
-      run: npm install
-    
-    - name: Run ESLint
-      run: npm run lint
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run tests
-      run: npm test
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
 
   deploy:
     needs: ci
@@ -46,27 +46,38 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-    - name: Install AWS EB CLI
-      run: pip install --upgrade awsebcli
+      - name: Install AWS EB CLI
+        run: pip install --upgrade awsebcli
 
-    - name: Deploy to correct environment
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ap-south-1
-      run: |
-        # Create version label manually to avoid Git dependency
-        VERSION_LABEL="app-$(date +%y%m%d_%H%M%S)"
+      - name: Configure Git for EB
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
 
-        eb init my-node-app --platform node.js --region $AWS_REGION
+      - name: Deploy to correct environment
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-south-1
+        run: |
+          # Create version label manually to avoid Git dependency
+          VERSION_LABEL="app-$(date +%y%m%d_%H%M%S)"
 
-        if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
-          echo "Deploying to production (My-node-app-env)..."
-          eb deploy My-node-app-env --staged --label "$VERSION_LABEL"
-        else
-          echo "Deploying to staging (my-node-app-staging)..."
-          eb deploy my-node-app-staging --staged --label "$VERSION_LABEL"
-        fi
+          # Initialize EB application
+          eb init my-node-app --platform node.js --region $AWS_REGION --yes
+
+          # Create application version
+          eb appversion --create "$VERSION_LABEL" --staged
+
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            echo "Deploying to production (My-node-app-env)..."
+            eb deploy My-node-app-env --version "$VERSION_LABEL"
+          else
+            echo "Deploying to staging (my-node-app-staging)..."
+            eb deploy my-node-app-staging --version "$VERSION_LABEL"
+          fi
