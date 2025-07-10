@@ -1,10 +1,10 @@
 global:
   application_name: my-node-app
   default_region: ap-south-1
-  environment_name: My-node-app-env
   platform: Node.js
 
 branch-defaults:
   main:
     environment: My-node-app-env
-    group_suffix: null
+  my-feature-branch:  # optional, for dev previews
+    environment: my-node-app-staging
