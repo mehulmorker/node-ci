@@ -51,13 +51,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install AWS EB CLI
-        run: pip install --upgrade awsebcli
-
-      - name: Configure Git for EB
-        run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
 
       - name: Create deployment package
         run: |
@@ -69,21 +68,40 @@ jobs:
           # Install production dependencies
           npm ci --only=production
 
-      - name: Deploy to correct environment
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ap-south-1
+          # Create deployment zip
+          zip -r ../deployment.zip . -x "node_modules/.cache/*"
+
+      - name: Deploy to Elastic Beanstalk
         run: |
-          cd deployment
+          # Generate version label
+          VERSION_LABEL="app-$(date +%y%m%d_%H%M%S)"
 
-          # Initialize EB application
-          eb init my-node-app --platform node.js --region $AWS_REGION
+          # Get AWS account ID
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          S3_BUCKET="elasticbeanstalk-ap-south-1-$ACCOUNT_ID"
 
+          # Upload to S3
+          aws s3 cp deployment.zip s3://$S3_BUCKET/$VERSION_LABEL.zip
+
+          # Create application version
+          aws elasticbeanstalk create-application-version \
+            --application-name my-node-app \
+            --version-label "$VERSION_LABEL" \
+            --source-bundle S3Bucket="$S3_BUCKET",S3Key="$VERSION_LABEL.zip" \
+            --auto-create-application \
+            --region ap-south-1
+
+          # Determine environment
           if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
-            echo "Deploying to production (My-node-app-env)..."
-            eb deploy My-node-app-env
+            ENVIRONMENT="My-node-app-env"
+            echo "Deploying to production ($ENVIRONMENT)..."
           else
-            echo "Deploying to staging (my-node-app-staging)..."
-            eb deploy my-node-app-staging
+            ENVIRONMENT="my-node-app-staging"
+            echo "Deploying to staging ($ENVIRONMENT)..."
           fi
+
+          # Deploy to environment
+          aws elasticbeanstalk update-environment \
+            --environment-name "$ENVIRONMENT" \
+            --version-label "$VERSION_LABEL" \
+            --region ap-south-1
