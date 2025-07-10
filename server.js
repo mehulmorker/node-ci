@@ -22,7 +22,7 @@ const products = [
   },
   {
     id: 2,
-    name: "Cotton T-Shirt",
+    name: " Snitch Cotton T-Shirt",
     category: "Apparel",
     price: 24.99,
     description: "Comfortable cotton t-shirt in various colors",
