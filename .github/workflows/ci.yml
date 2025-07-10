@@ -64,3 +64,4 @@ jobs:
         else
           echo "Deploying to staging (my-node-app-staging)..."
           eb deploy my-node-app-staging
+        fi
