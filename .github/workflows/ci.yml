@@ -69,7 +69,7 @@ jobs:
           VERSION_LABEL="app-$(date +%y%m%d_%H%M%S)"
 
           # Initialize EB application
-          eb init my-node-app --platform node.js --region $AWS_REGION --yes
+          eb init my-node-app --platform node.js --region $AWS_REGION
 
           # Create application version
           eb appversion --create "$VERSION_LABEL" --staged
