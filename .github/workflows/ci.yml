@@ -62,7 +62,7 @@ jobs:
         run: |
           # Create a clean deployment directory
           mkdir -p deployment
-          cp -r server.js package.json package-lock.json .elasticbeanstalk .ebignore Procfile deployment/
+          cp -r server.js package.json package-lock.json .elasticbeanstalk .ebignore .ebextensions Procfile deployment/
           cd deployment
 
           # Install production dependencies
@@ -89,6 +89,13 @@ jobs:
             --version-label "$VERSION_LABEL" \
             --source-bundle S3Bucket="$S3_BUCKET",S3Key="$VERSION_LABEL.zip" \
             --auto-create-application \
+            --region ap-south-1
+
+          # Wait for application version to be processed
+          echo "Waiting for application version to be processed..."
+          aws elasticbeanstalk wait application-version-processed \
+            --application-name my-node-app \
+            --version-label "$VERSION_LABEL" \
             --region ap-south-1
 
           # Determine environment
