@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Node.js CI/CD
 
 on:
   push:
@@ -7,8 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  ci:
     runs-on: ubuntu-latest
 
     strategy:
@@ -41,15 +40,23 @@ jobs:
     - name: Run tests
       run: npm test
 
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install AWS EB CLI
+      run: pip install --upgrade awsebcli
 
     - name: Deploy to Elastic Beanstalk
-      if: success()
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ap-south-1  # Change if you're using another region
+        AWS_REGION: ap-south-1
       run: |
-        pip install --upgrade awsebcli
-        eb init my-node-app --platform node.js --region $AWS_REGION
-        eb use My-node-app-env    # e.g. "my-node-app-env"
+        eb use "My-node-app-env"
         eb deploy
