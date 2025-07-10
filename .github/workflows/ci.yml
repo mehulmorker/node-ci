@@ -61,6 +61,8 @@ jobs:
         # Create version label manually to avoid Git dependency
         VERSION_LABEL="app-$(date +%y%m%d_%H%M%S)"
 
+        eb init my-node-app --platform node.js --region $AWS_REGION
+
         if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
           echo "Deploying to production (My-node-app-env)..."
           eb deploy My-node-app-env --staged --label "$VERSION_LABEL"
