@@ -91,17 +91,38 @@ const validateProduct = (product) => {
   const errors = [];
 
   requiredFields.forEach((field) => {
-    if (!product[field]) {
+    // Check for missing or empty (including whitespace-only) fields
+    if (
+      product[field] === undefined ||
+      product[field] === null ||
+      (typeof product[field] === "string" && product[field].trim() === "")
+    ) {
       errors.push(`${field} is required`);
     }
   });
 
-  if (product.price && (isNaN(product.price) || product.price <= 0)) {
-    errors.push("Price must be a positive number");
+  // Only check price if present and not empty string
+  if (
+    product.price !== undefined &&
+    product.price !== null &&
+    !(typeof product.price === "string" && product.price.trim() === "")
+  ) {
+    const price = Number(product.price);
+    if (isNaN(price) || price <= 0) {
+      errors.push("Price must be a positive number");
+    }
   }
 
-  if (product.stock && (isNaN(product.stock) || product.stock < 0)) {
-    errors.push("Stock must be a non-negative number");
+  // Only check stock if present and not empty string
+  if (
+    product.stock !== undefined &&
+    product.stock !== null &&
+    !(typeof product.stock === "string" && product.stock.trim() === "")
+  ) {
+    const stock = Number(product.stock);
+    if (isNaN(stock) || stock < 0) {
+      errors.push("Stock must be a non-negative number");
+    }
   }
 
   return errors;
@@ -143,6 +164,13 @@ app.get("/products", (req, res) => {
 app.get("/products/:id", (req, res) => {
   try {
     const productId = parseInt(req.params.id);
+    if (isNaN(productId)) {
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: "Invalid product ID format",
+      });
+    }
     const product = products.find((p) => p.id === productId);
 
     if (!product) {
@@ -228,15 +256,17 @@ app.use("*", (req, res) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Product API server is running on port ${PORT}`);
-  console.log(`📖 API Documentation:`);
-  console.log(`   GET  http://localhost:${PORT}/products`);
-  console.log(`   GET  http://localhost:${PORT}/products/:id`);
-  console.log(`   GET  http://localhost:${PORT}/products?category=Apparel`);
-  console.log(`   POST http://localhost:${PORT}/products`);
-  console.log(`   GET  http://localhost:${PORT}/health`);
-});
+// Start server only if run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Product API server is running on port ${PORT}`);
+    console.log(`📖 API Documentation:`);
+    console.log(`   GET  http://localhost:${PORT}/products`);
+    console.log(`   GET  http://localhost:${PORT}/products/:id`);
+    console.log(`   GET  http://localhost:${PORT}/products?category=Apparel`);
+    console.log(`   POST http://localhost:${PORT}/products`);
+    console.log(`   GET  http://localhost:${PORT}/health`);
+  });
+}
 
 module.exports = app;
