@@ -3,3 +3,8 @@ global:
   default_region: ap-south-1
   environment_name: My-node-app-env
   platform: Node.js
+
+branch-defaults:
+  main:
+    environment: My-node-app-env
+    group_suffix: null
