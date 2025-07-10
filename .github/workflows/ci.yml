@@ -58,5 +58,5 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ap-south-1
       run: |
-        eb use "My-node-app-env"
-        eb deploy
+        eb use "My-node-app-env" --region $AWS_REGION
+        eb deploy --region $AWS_REGION
