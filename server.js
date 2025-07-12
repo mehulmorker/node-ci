@@ -40,7 +40,7 @@ const products = [
   },
   {
     id: 4,
-    name: "Running Shoes",
+    name: "Nike Shoes",
     category: "Apparel",
     price: 129.99,
     description: "Professional running shoes with cushioning",
