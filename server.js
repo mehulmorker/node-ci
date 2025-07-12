@@ -31,7 +31,7 @@ const products = [
   },
   {
     id: 3,
-    name: "Smartphone Case",
+    name: "Iphone Smartphone Case",
     category: "Electronics",
     price: 19.99,
     description: "Protective case for smartphones",
