@@ -2,9 +2,9 @@ name: Node.js CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   ci:
@@ -15,30 +15,30 @@ jobs:
         node-version: [20.x]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Cache node_modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-    - name: Install dependencies
-      run: npm install
-    
-    - name: Run ESLint
-      run: npm run lint
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run tests
-      run: npm test
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
 
   deploy:
     needs: ci
@@ -46,22 +46,50 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Install AWS EB CLI
-      run: pip install --upgrade awsebcli
+      - name: Install AWS EB CLI
+        run: pip install --upgrade awsebcli
 
-    - name: Deploy to correct environment
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ap-south-1
-      run: |
-        if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
-          echo "Deploying to production (My-node-app-env)..."
-          eb deploy My-node-app-env
-        else
-          echo "Deploying to staging (my-node-app-staging)..."
-          eb deploy my-node-app-staging
-        fi
+      - name: Configure Git for EB CLI
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Initialize EB CLI (if needed)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-south-1
+        run: |
+          # Check if EB CLI is already initialized
+          if [ ! -f .elasticbeanstalk/config.yml ]; then
+            echo "Initializing EB CLI..."
+            eb init my-node-app --region ap-south-1 --platform node.js --non-interactive
+          else
+            echo "EB CLI already initialized"
+          fi
+
+      - name: Deploy to correct environment
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-south-1
+        run: |
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            echo "🚀 Deploying to production (My-node-app-env)..."
+            eb deploy My-node-app-env
+            echo "✅ Production deployment completed!"
+          else
+            echo "🧪 Deploying to staging (my-node-app-staging)..."
+            # Check if staging environment exists before deploying
+            if eb status my-node-app-staging 2>/dev/null; then
+              eb deploy my-node-app-staging
+              echo "✅ Staging deployment completed!"
+            else
+              echo "❌ Error: Staging environment 'my-node-app-staging' not found!"
+              echo "Please ensure the staging environment exists in AWS Elastic Beanstalk."
+              exit 1
+            fi
+          fi
