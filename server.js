@@ -15,7 +15,7 @@ const products = [
     id: 1,
     name: "Apple Airpods",
     category: "Electronics",
-    price: 90.99,
+    price: 99.99,
     description: "High-quality wireless headphones with noise cancellation",
     stock: 30,
     image: "https://example.com/headphones.jpg",
@@ -40,7 +40,7 @@ const products = [
   },
   {
     id: 4,
-    name: "Running Shoes",
+    name: "Nike Running Shoes",
     category: "Apparel",
     price: 129.99,
     description: "Professional running shoes with cushioning",
