@@ -13,7 +13,7 @@ app.use(express.json());
 const products = [
   {
     id: 1,
-    name: "Apple Wireless Bluetooth Headphone",
+    name: "Apple Airpods",
     category: "Electronics",
     price: 90.99,
     description: "High-quality wireless headphones with noise cancellation",
