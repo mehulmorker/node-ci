@@ -71,9 +71,9 @@ jobs:
           AWS_REGION: ap-south-1
         run: |
           if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
-            echo "Deploying to production (My-node-app-env)..."
+            echo "Deploying to production (My-node-app-env).."
             eb deploy My-node-app-env
           else
-            echo "Deploying to staging (my-node-app-staging)..."
+            echo "Deploying to staging (my-node-app-staging).."
             eb deploy my-node-app-staging
           fi
